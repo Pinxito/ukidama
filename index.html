@@ -1,1 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculateur d'atelier — UKIDAMA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
 
+  <header>
+    <div class="sun"></div>
+    <p class="eyebrow">UKIDAMA · Outil interne</p>
+    <h1>Le prix juste,<br><em>exposé au clair.</em></h1>
+    <p class="lede">Calculez le tarif d'un atelier en fonction du temps de travail réel, du matériel et des frais — puis générez un devis prêt à envoyer.</p>
+  </header>
+
+  <div class="grid">
+    <!-- ============ FORMULAIRE ============ -->
+    <div>
+      <div class="card">
+        <h2>1. Atelier</h2>
+        <p class="h2-sub">Technique et public sont deux choix indépendants — un même atelier peut s'adresser à des publics différents.</p>
+        <p class="chip-group-label">Technique</p>
+        <div class="chips" id="techniqueChips"></div>
+        <p class="chip-group-label">Public</p>
+        <div class="chips" id="publicChips"></div>
+
+        <fieldset>
+          <legend>Qui finance l'atelier ?</legend>
+          <div class="field">
+            <select id="funderType">
+              <option value="particulier">Particulier — atelier grand public</option>
+              <option value="association">Association partenaire</option>
+              <option value="ecole">École / centre de loisirs</option>
+              <option value="entreprise">Entreprise (team building)</option>
+              <option value="musee">Musée / institution culturelle</option>
+            </select>
+            <div class="unit" id="funderHint">Grand public : les 3 tarifs (solidaire / normal / soutien) s'appliquent en prix libre.</div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Atelier</legend>
+          <div class="field-row">
+            <div class="field">
+              <label for="participants">Nombre de participants</label>
+              <input type="number" id="participants" value="10" min="1">
+            </div>
+            <div class="field">
+              <label for="animTime">Durée face au public</label>
+              <input type="number" id="animTime" value="2.5" step="0.25" min="0">
+              <div class="unit">heures</div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Temps de travail de l'artiste</legend>
+          <div class="field-row">
+            <div class="field">
+              <label for="prepTime">Préparation</label>
+              <input type="number" id="prepTime" value="2" step="0.25" min="0">
+              <div class="unit">heures</div>
+            </div>
+            <div class="field">
+              <label for="cleanupTime">Rangement</label>
+              <input type="number" id="cleanupTime" value="1" step="0.25" min="0">
+              <div class="unit">heures</div>
+            </div>
+            <div class="field">
+              <label for="commTime">Communication (échanges, devis)</label>
+              <input type="number" id="commTime" value="0.5" step="0.25" min="0">
+              <div class="unit">heures</div>
+            </div>
+            <div class="field">
+              <label for="adminTime">Administratif (facturation)</label>
+              <input type="number" id="adminTime" value="0.5" step="0.25" min="0">
+              <div class="unit">heures</div>
+            </div>
+            <div class="field">
+              <label for="transportTime">Transport (trajet)</label>
+              <input type="number" id="transportTime" value="0.5" step="0.25" min="0">
+              <div class="unit">heures</div>
+            </div>
+            <div class="field">
+              <label for="hourlyRate">Taux horaire souhaité</label>
+              <input type="number" id="hourlyRate" value="60" min="0">
+              <div class="unit">€ / heure — plancher syndical 60 €/h (Maison des Artistes / SNSP, référentiel DCA 2025), structures culturelles 40–80 €/h, jusqu'à 120 €/h en exceptionnel (Ministère de la Culture)</div>
+              <div class="chips" id="rateChips" style="margin-top:8px;"></div>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="sessionCount">Séances prévues avec cette même préparation</label>
+              <input type="number" id="sessionCount" value="6" min="1">
+              <div class="unit">La préparation, la communication et l'administratif sont répartis sur ce nombre de séances. 6 est une hypothèse de départ réaliste pour un format d'atelier repris plusieurs fois — c'est cette hypothèse, plus que le taux horaire, qui rapproche le prix calculé du marché parisien réel sans sous-payer l'artiste. Mets 1 si l'atelier est vraiment ponctuel et unique.</div>
+            </div>
+          </div>
+          <label class="checkbox-line">
+            <input type="checkbox" id="caapRule">
+            <span>Appliquer la règle CAAP/FRAAP : compter la 1ère heure d'atelier double (prépa + installation sur place)</span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Matériel</legend>
+          <div class="field-row">
+            <div class="field">
+              <label for="materialFixed">Matériel fixe (outils, four, moules...)</label>
+              <input type="number" id="materialFixed" value="0" min="0">
+              <div class="unit">€ (total, réutilisable)</div>
+            </div>
+            <div class="field">
+              <label for="materialCost">Consommables</label>
+              <input type="number" id="materialCost" value="15" min="0">
+              <div class="unit">€ / participant</div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Frais annexes</legend>
+          <div class="field-row">
+            <div class="field">
+              <label for="roomRental">Location de salle</label>
+              <input type="number" id="roomRental" value="0" min="0">
+              <div class="unit">€ (total)</div>
+            </div>
+            <div class="field">
+              <label for="transportCost">Frais de transport (essence, péage)</label>
+              <input type="number" id="transportCost" value="0" min="0">
+              <div class="unit">€ (total)</div>
+            </div>
+            <div class="field">
+              <label for="insurance">Assurance</label>
+              <input type="number" id="insurance" value="0" min="0">
+              <div class="unit">€ (total)</div>
+            </div>
+            <div class="field">
+              <label for="miscCost">Divers</label>
+              <input type="number" id="miscCost" value="0" min="0">
+              <div class="unit">€ (total)</div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Coefficients tarifaires</legend>
+          <div class="field-row">
+            <div class="field">
+              <label for="coefSolidaire">Solidaire</label>
+              <input type="number" id="coefSolidaire" value="1.10" step="0.01" min="1">
+              <div class="unit">× coût total</div>
+            </div>
+            <div class="field">
+              <label for="coefNormal">Normal (équilibre)</label>
+              <input type="number" id="coefNormal" value="1.30" step="0.01" min="1">
+              <div class="unit">× coût total</div>
+            </div>
+            <div class="field">
+              <label for="coefSoutien">Soutien</label>
+              <input type="number" id="coefSoutien" value="1.60" step="0.01" min="1">
+              <div class="unit">× coût total</div>
+            </div>
+            <div class="field">
+              <label for="minPrice">Prix plancher</label>
+              <input type="number" id="minPrice" value="40" min="0">
+              <div class="unit">€ / participant minimum — auto-rempli selon la technique et le public</div>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- ============ RÉSULTATS ============ -->
+    <div>
+      <div class="result-card">
+        <p class="eyebrow" id="heroLabel">Tarif normal conseillé</p>
+        <div class="price-hero">
+          <div class="amount" id="outPricePerPerson">— €</div>
+          <div class="label" id="heroSubLabel">par participant</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="receipt">
+          <div class="receipt-line"><span>Temps de travail total</span><span id="outTimeTotal">—</span></div>
+          <div class="receipt-line"><span>Coût artiste (temps × taux)</span><span id="outArtistCost">—</span></div>
+          <div class="receipt-line"><span>Matériel (fixe + consommables)</span><span id="outMaterialCost">—</span></div>
+          <div class="receipt-line"><span>Frais annexes</span><span id="outFixedCost">—</span></div>
+          <div class="receipt-line total"><span>Coût réel de l'atelier</span><span id="outTotalCost">—</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="tiersBlock">
+          <p class="eyebrow" style="margin-bottom:10px;">Trois tarifs, prix libre</p>
+          <div class="tiers">
+            <div class="tier"><div class="tier-label">Solidaire</div><div class="tier-price" id="tierSolidaire">—</div></div>
+            <div class="tier"><div class="tier-label">Normal</div><div class="tier-price" id="tierNormal">—</div></div>
+            <div class="tier"><div class="tier-label">Soutien</div><div class="tier-price" id="tierSoutien">—</div></div>
+          </div>
+        </div>
+
+        <div id="institutionBlock" style="display:none;">
+          <p class="eyebrow" style="margin-bottom:10px;">Tarif institutionnel</p>
+          <div class="receipt">
+            <div class="receipt-line"><span id="institutionLabel">Coefficient appliqué</span><span id="institutionCoef">—</span></div>
+            <div class="receipt-line total"><span>Total facturé</span><span id="institutionTotal">—</span></div>
+          </div>
+        </div>
+
+        <div class="compare">
+          <div class="compare-label">Comparé aux tarifs pratiqués à Paris (<span id="compareType">—</span>)</div>
+          <div class="bar-track">
+            <div class="bar-range" id="barRange"></div>
+            <div class="bar-marker" id="barMarker"></div>
+          </div>
+          <div class="bar-caption"><span id="parisMin">—</span><span id="parisMax">—</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="pdf-zone">
+          <p class="eyebrow" style="margin-bottom:10px;">Générer le devis</p>
+          <div class="field-inline">
+            <input type="text" id="pdfWorkshopName" placeholder="Nom de l'atelier">
+            <input type="text" id="pdfClientName" placeholder="Nom du client / organisateur">
+          </div>
+          <button class="btn-pdf" onclick="generatePDF()">Télécharger le devis PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    UKIDAMA — Calculateur interne de tarification d'atelier. Les chiffres sont indicatifs et à ajuster selon le contexte.<br>
+    Repères tarifaires : Maison des Artistes / SNSP (barème minimum animation), référentiel DCA 2025 (centres d'art contemporain), Ministère de la Culture (conditions de rémunération des interventions artistiques), CAAP / FRAAP (tarif horaire indexé sur le SMIC, 2026).
+  </footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
